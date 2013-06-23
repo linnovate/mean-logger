@@ -1,17 +1,20 @@
 {
-    "name": "mean-logger"
-  , "description": "MEAN Logger"
-  , "version": "1.0.0"
-  , "private": false
-  , "main" : "app.js"
-  , "author": "MEAN Loggine - plugin example."
-  , "engines": {
-        "node": "0.10.x"
-      , "npm":  "1.2.x"
-    }
-  , "dependencies": {
-      "jade": "latest"
-    , "mongoose": "latest"
-    , "express": "latest"
-  }
+  "name": "mean-logger",
+  "version": "0.0.0",
+  "description": "A Logging Module for MEAN Apps.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R landing lib/mean-logger.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "mean-logger"
+  },
+  "keywords": [
+    "logger",
+    "mean",
+    "log"
+  ],
+  "author": "Amos Haviv(Linnovate LTD.)",
+  "license": "MIT"
 }
