@@ -90,4 +90,20 @@ describe('mean-logger', function() {
       });
     });
   });
+  it('shows the logged message in reverse chronological order (recent first)', function(done) {
+    fetch(port, '/logger/log?msg=first', function(err, body) {
+      if (err) return done(err);
+      fetch(port, '/logger/log?msg=second', function(err, body) {
+        if (err) return done(err);
+        fetch(port, '/logger/show', function(err, body) {
+          if(err) return done(err);
+          var content = JSON.parse(body);
+          content.should.have.length(2);
+          content[0].should.have.property('message', 'second');
+          content[1].should.have.property('message', 'first');
+          done();
+        });
+      });
+    });
+  });
 });
