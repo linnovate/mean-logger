@@ -4,7 +4,7 @@ var logger = require('../index');
 var mongoose = require('mongoose');
 var http = require('http');
 
-function fetch(port, path, done) {
+function fetchJson(port, path, done) {
   var page = [];
   var req = http.get('http://localhost:' + port + path, function(res) { 
     if (res.statusCode != 200) return done(new Error('Status code ' + res.statusCode));
@@ -12,7 +12,7 @@ function fetch(port, path, done) {
     res.on('data', function(ch) { page.push(ch); });
     res.on('error', function(e) { done(e); });
     res.on('end', function() {
-      done(null, page.join(''));
+      done(null, JSON.parse(page.join('')));
     });
   });
   req.on('error', function(e) {
@@ -57,33 +57,31 @@ describe('mean-logger', function() {
   });
 
   it('is initially empty', function(done) {
-    fetch(port, '/logger/show', function(err, body) {
+    fetchJson(port, '/logger/show', function(err, content) {
       if(err) return done(err);
-      var content = JSON.parse(body);
       content.should.eql([]);
       done();
     });
   });
   it('recrods a new item when /logger/log is accessed', function(done) {
-    fetch(port, '/logger/log', function(err, body) {
+    fetchJson(port, '/logger/log', function(err) {
       if (err) return done(err);
-      fetch(port, '/logger/show', function(err, body) {
+      fetchJson(port, '/logger/show', function(err, content) {
         if(err) return done(err);
-        var content = JSON.parse(body);
         content.should.have.length(1);
-        content[0].should.have.property('__v');
-        content[0].should.have.property('_id');
         content[0].should.have.property('created');
+        var date = new Date(content[0].created);
+        var now = new Date();
+        (now - date).should.be.lessThan(1000 * 60 * 60 * 12); // 12h
         done();
       });
     });
   });
   it('takes the log message from the "?msg" query param', function(done) {
-    fetch(port, '/logger/log?msg=some_message', function(err, body) {
+    fetchJson(port, '/logger/log?msg=some_message', function(err) {
       if (err) return done(err);
-      fetch(port, '/logger/show', function(err, body) {
+      fetchJson(port, '/logger/show', function(err, content) {
         if(err) return done(err);
-        var content = JSON.parse(body);
         content.should.have.length(1);
         content[0].should.have.property('message', 'some_message');
         done();
@@ -91,13 +89,12 @@ describe('mean-logger', function() {
     });
   });
   it('shows the logged message in reverse chronological order (recent first)', function(done) {
-    fetch(port, '/logger/log?msg=first', function(err, body) {
+    fetchJson(port, '/logger/log?msg=first', function(err) {
       if (err) return done(err);
-      fetch(port, '/logger/log?msg=second', function(err, body) {
+      fetchJson(port, '/logger/log?msg=second', function(err) {
         if (err) return done(err);
-        fetch(port, '/logger/show', function(err, body) {
+        fetchJson(port, '/logger/show', function(err, content) {
           if(err) return done(err);
-          var content = JSON.parse(body);
           content.should.have.length(2);
           content[0].should.have.property('message', 'second');
           content[1].should.have.property('message', 'first');
