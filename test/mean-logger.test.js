@@ -4,9 +4,9 @@ var logger = require('../index');
 var mongoose = require('mongoose');
 var http = require('http');
 
-function fetch(address, done) {
+function fetch(port, path, done) {
   var page = [];
-  var req = http.get(address, function(res) { 
+  var req = http.get('http://localhost:' + port + path, function(res) { 
     if (res.statusCode != 200) return done(new Error('Status code ' + res.statusCode));
     res.setEncoding('utf8');
     res.on('data', function(ch) { page.push(ch); });
@@ -25,39 +25,38 @@ function fetch(address, done) {
 describe('mean-logger', function() {
   var app = express();
   var server;
+  var coll;
+  var port = 4003;
   before(function(done) {
     mongoose.connect('mongodb://localhost/mean-logger-test', function(err) {
       if(err) return done(err);
-      mongoose.connection.db.dropCollection('logs', function(err) {
+      mongoose.connection.db.createCollection('logs', function(err, coll_) {
         if (err) return done(err);
-        var passport = {};
-        
-        logger.init(app, passport, mongoose);
-        app.get('/somepage', function(req, res) {
-          res.json({a: 1, b: 2});
-        });
-        app.use(app.router);
-        server = app.listen(4003, function() {
-          done();
+        coll = coll_;
+        coll.remove(function(err) {
+          if (err) return done(err);
+          var passport = {};
+          
+          logger.init(app, passport, mongoose);
+          app.use(app.router);
+          server = app.listen(port, function() {
+            done();
+          });
         });
       });
     });
   });
 
   after(function(done) {
-    server.close(done);
-  });
-
-  it('does something', function(done) {
-    fetch('http://localhost:4003/somepage', function(err, body) {
-      if(err) return done(err);
-      var content = JSON.parse(body);
-      content.should.eql({a: 1, b: 2});
-      done();
+    server.close(function(err1) {
+      mongoose.connection.db.dropDatabase(function(err2) {
+        done(err1 || err2);
+      });
     });
   });
-  it('is initially empty', function(done) {
-    fetch('http://localhost:4003/logger/show', function(err, body) {
+
+  it('log is initially empty', function(done) {
+    fetch(port, '/logger/show', function(err, body) {
       if(err) return done(err);
       var content = JSON.parse(body);
       content.should.eql([]);
@@ -65,9 +64,9 @@ describe('mean-logger', function() {
     });
   });
   it('items are added via logger/log', function(done) {
-    fetch('http://localhost:4003/logger/log', function(err, body) {
+    fetch(port, '/logger/log', function(err, body) {
       if (err) return done(err);
-      fetch('http://localhost:4003/logger/show', function(err, body) {
+      fetch(port, '/logger/show', function(err, body) {
         if(err) return done(err);
         var content = JSON.parse(body);
         content.should.have.length(1);
