@@ -69,7 +69,16 @@ describe('mean-logger', function() {
       fetchJson(port, '/logger/show', function(err, content) {
         if(err) return done(err);
         content.should.have.length(1);
-        content[0].should.have.property('created');
+        done();
+      });
+    });
+  });
+  it('assigns a creation time to the logged item', function(done) {
+    fetchJson(port, '/logger/log', function(err) {
+      if (err) return done(err);
+      fetchJson(port, '/logger/show', function(err, content) {
+        if(err) return done(err);
+        content.should.have.length(1);
         var date = new Date(content[0].created);
         var now = new Date();
         (now - date).should.be.lessThan(1000 * 60 * 60 * 12); // 12h
