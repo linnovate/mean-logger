@@ -33,15 +33,12 @@ describe('mean-logger', function() {
       mongoose.connection.db.createCollection('logs', function(err, coll_) {
         if (err) return done(err);
         coll = coll_;
-        coll.remove(function(err) {
-          if (err) return done(err);
-          var passport = {};
-          
-          logger.init(app, passport, mongoose);
-          app.use(app.router);
-          server = app.listen(port, function() {
-            done();
-          });
+
+        var passport = {};
+        logger.init(app, passport, mongoose);
+        app.use(app.router);
+        server = app.listen(port, function() {
+          done();
         });
       });
     });
@@ -53,6 +50,10 @@ describe('mean-logger', function() {
         done(err1 || err2);
       });
     });
+  });
+
+  beforeEach(function(done) {
+    coll.remove(done);
   });
 
   it('log is initially empty', function(done) {
