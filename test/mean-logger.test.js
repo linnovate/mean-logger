@@ -56,7 +56,7 @@ describe('mean-logger', function() {
     coll.remove(done);
   });
 
-  it('log is initially empty', function(done) {
+  it('is initially empty', function(done) {
     fetch(port, '/logger/show', function(err, body) {
       if(err) return done(err);
       var content = JSON.parse(body);
@@ -64,7 +64,7 @@ describe('mean-logger', function() {
       done();
     });
   });
-  it('items are added via logger/log', function(done) {
+  it('recrods a new item when /logger/log is accessed', function(done) {
     fetch(port, '/logger/log', function(err, body) {
       if (err) return done(err);
       fetch(port, '/logger/show', function(err, body) {
@@ -74,6 +74,18 @@ describe('mean-logger', function() {
         content[0].should.have.property('__v');
         content[0].should.have.property('_id');
         content[0].should.have.property('created');
+        done();
+      });
+    });
+  });
+  it('takes the log message from the "?msg" query param', function(done) {
+    fetch(port, '/logger/log?msg=some_message', function(err, body) {
+      if (err) return done(err);
+      fetch(port, '/logger/show', function(err, body) {
+        if(err) return done(err);
+        var content = JSON.parse(body);
+        content.should.have.length(1);
+        content[0].should.have.property('message', 'some_message');
         done();
       });
     });
